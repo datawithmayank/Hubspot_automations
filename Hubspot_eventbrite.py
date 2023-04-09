@@ -13,7 +13,7 @@ load_dotenv(dotenv_path)
 eventbrite_token = os.getenv("eventbrite_token1")
 
 # Set the organization ID
-organization_id = "246534986666"
+organization_id = os.getenv("eb_organization_id")
 headers = {
     "Authorization": f"Bearer {eventbrite_token}"
 }
@@ -27,7 +27,7 @@ while response.status_code == 200:
                                 params={"continuation": continuation})
     else:
         break
-events = [obj for obj in events if obj.get("series_id") == "511371103737"]
+events = [obj for obj in events if obj.get("series_id") == os.getenv("eb_events_series_id")]
 current_date = datetime.today().date()
 
 # Set your Hubspot API endpoint and credentials
