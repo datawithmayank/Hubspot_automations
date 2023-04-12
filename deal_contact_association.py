@@ -1,13 +1,16 @@
+# This code is working
 import requests
 import json
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+dotenv_path = "C:\\Users\\Mayank\\Documents\\API\\Hubspot-Eventbrite\\keys_config.env"
+load_dotenv(dotenv_path)
 
 # Set the Hubspot API endpoint and credentials
 hubspot_url = "https://api.hubapi.com/deals/v1/deal"
 hubspot_token = os.getenv("hubspot_token1")
+
 hubspot_headers = {
     "Content-Type": "application/json",
     "Authorization": f"Bearer {hubspot_token}"
