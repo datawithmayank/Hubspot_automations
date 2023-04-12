@@ -1,3 +1,5 @@
+# This one is working
+
 import requests
 import json
 from datetime import datetime
@@ -73,58 +75,35 @@ for event in events:
             # date_object = datetime.strptime(date_string, '%Y-%m-%d')
             unix_timestamp = int(date_object.timestamp() - 24 * 60 * 60) * 1000
 
-            # Check if a deal already exists with the same attendee name, email, and date attending
-            deal_exists = False
-            # Check if a deal with the same name, email, and date attending already exists in the pipeline
-            deals_url = "https://api.hubapi.com/deals/v1/deal/associated/contact/email/{email}/paged"
-            existing_deals = []
-            for attendee in attendees:
-                email = attendee["profile"]["email"]
-                response = requests.get(deals_url.format(email=email), headers=hubspot_headers)
-                if response.status_code == 200:
-                    deals = response.json()["deals"]
-                    for deal in deals:
-                        deal_name = deal["properties"]["dealname"]["value"]
-                        deal_email = deal["associations"]["associatedVids"][0]["value"]
-                        deal_date = deal["properties"]["date_attending"]["value"]
-                        if deal_name == name and deal_email == email and deal_date == unix_timestamp:
-                            existing_deals.append(deal["dealId"])
-                            print(
-                                f"Deal with name {name}, email {email}, and date attending {unix_timestamp} already exists in the pipeline")
-                            break
-
-            # Create a new deal for the attendee if it does not already exist
-            if not existing_deals:
-                deal_payload = {
-                    "associations": {
-                        "associatedVids": [],
-                        "associatedCompanyIds": [],
-                        "associatedDealIds": []
+            # Create a new deal for the attendee
+            deal_payload = {
+                "associations": {
+                    "associatedVids": [],
+                    "associatedCompanyIds": [],
+                    "associatedDealIds": []
+                },
+                "properties": [
+                    {
+                        "name": "dealname",
+                        "value": name
                     },
-                    "properties": [
-                        {
-                            "name": "dealname",
-                            "value": name
-                        },
-                        {
-                            "name": "dealstage",
-                            "value": "appointmentscheduled"
-                        },
-                        {
-                            "name": "date_attending",
-                            "value": unix_timestamp
-                        },
-                        {
-                            "name": "email",
-                            "value": email
-                        },
-                    ]
-                }
-                response = requests.post(hubspot_url, headers=hubspot_headers, data=json.dumps(deal_payload))
-                if response.status_code == 200:
-                    print(f"Deal created for attendee {name} ({email})")
-                else:
-                    print(f"Error creating deal for attendee {name} ({email}): {response.text}")
+                    {
+                        "name": "dealstage",
+                        "value": "appointmentscheduled"
+                    },
+                    {
+                        "name": "date_attending",
+                        "value": unix_timestamp
+                    },
+                    {
+                        "name": "email",
+                        "value": email
+                    },
+                ]
+            }
+            response = requests.post(hubspot_url, headers=hubspot_headers, data=json.dumps(deal_payload))
+            if response.status_code == 200:
+                print(f"Deal created for attendee {name} ({email})")
             else:
-                print("No new deals created")
+                print(f"Error creating deal for attendee {name} ({email}): {response.text}")
 
