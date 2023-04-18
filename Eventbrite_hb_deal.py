@@ -70,12 +70,15 @@ while True:
 
 # Store the details of each existing deal
 existing_deal_details = set()
+existing_deal_ids = {}
 for deal in existing_deals:
     deal_name = deal["name"]
     deal_email = deal["email"]
     deal_date = deal["date"]
+    deal_id = deal["deal_id"]
     keyvalue = ""
     keyvalue += str(deal_name).replace(" ", "") + str(deal_email) + str(deal_date)
+    existing_deal_ids[keyvalue] = deal_id
     if keyvalue in existing_deal_details:
         print("I found a duplicate", keyvalue)
     else:
@@ -113,6 +116,7 @@ for event in events:
             name = attendee["profile"]["name"]
             email = attendee["profile"]["email"]
             phone = attendee["profile"]["cell_phone"]
+            refunded = attendee["refunded"]
             # Convert date string to datetime object in UTC
             date_string = event["start"]["utc"]
             date_object = datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%SZ')
@@ -122,8 +126,17 @@ for event in events:
             unix_timestamp = int(date_object.timestamp() - 24 * 60 * 60) * 1000
             keyvalue = ""
             keyvalue += str(name).replace(" ", "") + str(email) + str(unix_timestamp)
-            if keyvalue in existing_deal_details:
-                print(f"Deal already exists for attendee {name} ({email})")
+            if refunded:
+                deal_id_deleted = existing_deal_ids[keyvalue] if keyvalue in existing_deal_ids else None
+                response = requests.delete(f"{hubspot_deals_url}/{deal_id_deleted}", headers=hubspot_headers,
+                                           params=params)
+                if response.status_code == 204:
+                    print(f"Deal deleted for {name} ({email})", )
+                else:
+                    print(f"Error deleting deal for attendee {name} ({email}): {response.text}")
+                    print(response.content)
+            elif keyvalue in existing_deal_details and refunded == False:
+                print(f"Deal already exists for attendee {name} ({email}) and is not refunded")
             else:
                 # print(keyvalue)
                 # Create the new deal
